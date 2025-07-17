@@ -46,13 +46,13 @@ allowing simultaneous read/write operations without conflicts or data corruption
 14. **Query Performance Optimization**: Efficient query performance is crucial for a well-designed Data Lakehouse. 
 As data volume and concurrency grow, optimizing performance across the storage, compute, query layers becomes essential.
 15. **Observability**: Ensures transparency across the entire data pipeline—from ingestion to consumption—by capturing logs, metrics, and traces from processes such as Spark, NiFi, Airflow, etc.
-It allows data engineers to monitor system health, performance, data quality, last updated timestamps for critical datasets.
+It allows data engineers to monitor system health, performance, debugging errors.
 
 ## Medallion Architecture Overview
 The Medallion Architecture is a design pattern for organizing data in Layers within a Data Lakehouse, popularized by platforms like Databricks. 
 It provides clear guidance on managing data through different stages of maturity and refinement, promoting clarity, reliability, governance, and scalability.
 
-1. **Bronze Layer 🥉(Raw Data)**
+### 1. **Bronze Layer 🥉(Raw Data)**
 Acts as a foundational raw-data store, supporting historical retention, flexibility, and initial ingestion. 
 Stores raw, unaltered data directly ingested from various sources. Minimal transformation occurs here.
 * Data is stored in its original format (structured, semi-structured, or unstructured).
@@ -61,7 +61,7 @@ Stores raw, unaltered data directly ingested from various sources. Minimal trans
 * Includes data lineage and ingestion metadata (timestamps, source identifiers, ingestion details).
 * Example: Raw JSON logs from web servers or streaming data from Kafka topics are ingested and stored.
 
-2. **Silver Layer 🥈 (Curated Data)**
+### 2. **Silver Layer 🥈 (Curated Data)**
 Refine and cleanse data from Bronze Layer, making it consistent, structured, and queryable. The data in this layer is considered trusted and consumable for further processing, analytics and modeling.
 * Cleansed, standardized, and validated data (schema enforcement, quality checks, deduplication).
 * Data schema is explicitly defined (schema-on-write), evolved appropriately with versioning.
@@ -69,7 +69,7 @@ Refine and cleanse data from Bronze Layer, making it consistent, structured, and
 * Includes metadata for auditability, lineage, and data quality metrics.
 * Example: Raw event logs (Bronze) are cleansed, parsed, and converted into structured tables with clear schemas for further processing.
 
-3. **Gold Layer 🥇 (Aggregated & Business-ready Data)**
+### 3. **Gold Layer 🥇 (Aggregated & Business-ready Data)**
 Provides aggregated, optimized, ready to serve data for business consumption i.e. analytics, reporting, dashboards, or AI/ML usage.
 •	Highly refined and optimized datasets targeted for specific use cases.
 •	Data is pre-aggregated or structured to support fast and efficient queries (e.g., fact tables, dimension tables, feature stores).
@@ -93,78 +93,40 @@ It complements and leverages key Lakehouse features as follows.
 | **Advanced Analytics & ML Integration** | NA                         | Refined data for further processing           | Optimized for ML/BI                     |
 | **Query Performance Optimization**      | Minimal optimization       | Moderate optimization                         | Extensive optimization                  |
 
-
-7.
-8.	Data Security
-9.	Data Quality Management
-10.	Streaming & Batch Processing
-11.	Scalability & Elasticity
-12.	Separation of Storage & Compute
-13.	Data Discovery & Cataloging
-
 ## Key Design Principles
-* Scalability and elasticity
 * Separation of storage and compute
-* Schema evolution
-* Data governance and lineage
-* Data security and compliance
+* Scalability and elasticity
+* Modular Architecture
 * Batch and real-time data ingestion, processing and serving
+![img_1.png](img_1.png)
 
-## Essential Features & Best Technologies
+## Implementation
 
-1. Storage Layer
+### Architecture
+![img_2.png](img_2.png)
 
-Best Choice: MinIO
-•	Alternatives: Apache HDFS, AWS S3, Google Cloud Storage
+![img_3.png](img_3.png)
 
-Criteria	MinIO	Apache HDFS	AWS S3
-Scalability	High	Medium	High
-Open Source	Yes	Yes	No (Managed)
-Performance	High	Medium	High
-Ease of Setup	Easy	Medium	Easy
+### Storage Layer
+* MinIO for Bronze and Silver Layer
+* Redis, Cassandra for Gold Layer
 
-2. Table Format
+### Table Format
+Apache Iceberg
+Alternatives: Delta Lake, Apache Hudi
 
-Best Choice: Apache Iceberg
-•	Alternatives: Delta Lake, Apache Hudi
+### Compute Engine
+* **Apache Spark**: For batch processing and stream processing pipelines implementation.
+* **Apache NiFi**: For batch and real-time data ingestion. Minor transformations can also be performed.
+* **Apache Airflow**: For batch data processing pipelines orchestration and scheduling.
 
-Criteria	Iceberg	Delta Lake	Hudi
-Schema Evolution	Excellent	Good	Good
-Performance	Excellent	Very Good	Good
-Open Governance	Apache	Linux Found.	Apache
-Compatibility	Spark, Flink	Spark, Flink	Spark, Flink
+### Data Governance
+**OpenMetadata**: Supports Metadata Management, Cataloging, Business Glossary, Classifications, Tagging, Lineage, Security, Data Quality and Data Discovery.
+Alternatives: Apache Atlas, Marquez
 
-3. Compute Engine
-
-Best Choice: Apache Spark
-•	Alternatives: Apache Flink, PrestoDB, Trino
-
-Criteria	Spark	Flink	PrestoDB/Trino
-Batch Processing	Excellent	Good	Good
-Real-time	Good	Excellent	Moderate
-SQL Support	Strong	Moderate	Strong
-Ecosystem	Extensive	Moderate	Good
-
-4. Metadata Management & Data Governance
-
-Best Choice: OpenMetadata
-•	Alternatives: Apache Atlas, Marquez
-
-Criteria	OpenMetadata	Apache Atlas	Marquez
-Data Lineage	Excellent	Good	Excellent
-Governance & Security	Excellent	Excellent	Moderate
-Ease of Integration	Excellent	Moderate	Excellent
-UI & User Experience	Excellent	Moderate	Good
-
-5. Data Quality Management
-
-Best Choice: Great Expectations
-•	Alternatives: Deequ, Soda
-
-Criteria	Great Expectations	Deequ	Soda
-Community & Support	Excellent	Good	Good
-Integration with Spark	Strong	Strong	Moderate
-Flexibility	High	Medium	High
+### Data Quality Management
+Recommended: OpenMetadata
+Alternatives: Great Expectations, Deequ, Soda
 
 6. Feature Store (Real-Time Serving)
 
@@ -195,9 +157,6 @@ Implementation Best Practices
 •	Regularly audit data quality and perform automated checks.
 •	Maintain clear and structured documentation.
 
-Conclusion
-
-Implementing a Data Lakehouse with Medallion Architecture offers unparalleled scalability, robust governance, and streamlined analytics. By selecting the best open-source tools—such as Apache Iceberg, Spark, OpenMetadata, and MinIO—you ensure flexibility, cost efficiency, and enterprise-grade capabilities. Evaluate alternatives based on your specific use case and criteria to make informed technology choices that align with your organization’s objectives.
 
 ## References
 - [Spring boot starter for Spark](https://github.com/officiallysingh/spring-boot-starter-spark).
