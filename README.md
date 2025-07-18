@@ -12,7 +12,6 @@ The Medallion Architecture enhances this approach by logically segmenting data i
 * AWS Lakehouse (S3 + Redshift Spectrum/Athena/Iceberg)
 * Azure Synapse Analytics
 
-
 ## Features
 1. **Unified Storage**: Storage platform or system capable of managing diverse types of data (structured, semi-structured, unstructured), 
 enabling multiple workloads (batch processing, streaming, analytics, machine learning) on a common data repository.
@@ -124,7 +123,7 @@ Alternatives: Delta Lake, Apache Hudi
 **OpenMetadata**: Supports Metadata Management, Cataloging, Business Glossary, Classifications, Tagging, Lineage, Security, Data Quality and Data Discovery.
 Alternatives: Apache Atlas, Marquez
 
-### Data Quality Management
+### Data Quality Assurance
 Recommended: OpenMetadata
 Alternatives: Great Expectations, Deequ, Soda
 
