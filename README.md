@@ -96,74 +96,175 @@ It complements and leverages key Lakehouse features as follows.
 * Separation of storage and compute
 * Scalability and elasticity
 * Modular Architecture
-* Batch and real-time data ingestion, processing and serving
-![img_1.png](img_1.png)
+* Batch and real-time data ingestion, processing and serving  
+![Design Principles](img/design_principles.png)
 
-## Implementation
+## Architecture
+**Bird's Eye View**  
+![Birds eye View](img/birds_eye_view.png)  
 
-### Architecture
-![img_2.png](img_2.png)
+**Components View**
+![components](img/components.png)  
 
-![img_3.png](img_3.png)
+### Storage
+It forms the foundation of the Lakehouse and is responsible for persisting all structured, semi-structured, and unstructured data:
 
-### Storage Layer
-* MinIO for Bronze and Silver Layer
-* Redis, Cassandra for Gold Layer
+| **Layer** | **Storage**       | **Format/Structure**        | **Capability**                                   |
+|-----------|-------------------|-----------------------------|--------------------------------------------------|
+| Bronze    | MinIO             | Raw files (JSON, CSV, Avro) | Ingested data from Kafka, DBs, APIs              |
+| Silver    | MinIO             | Iceberg tables (Parquet)    | Cleaned/structured data with schema & versioning |
+| Gold      | Redis / Cassandra | Faster access to data       | Caching, feature serving                         |
 
 ### Table Format
-Apache Iceberg
-Alternatives: Delta Lake, Apache Hudi
+**Apache Iceberg**: is an open table format designed for huge analytic datasets on cloud object stores or HDFS. 
+
+| **Feature**                          | **Description**                                                                                                |
+|--------------------------------------|----------------------------------------------------------------------------------------------------------------|
+| 🔁 **ACID Transactions**             | Full support for **atomic operations** (insert, delete, update, merge) even on object stores like S3/MinIO.    |
+| 🧬 **Schema Evolution**              | Supports **add, drop, rename, reorder columns** without rewriting data.                                        |
+| 🕒 **Time Travel & Versioning**      | Query **historical snapshots** of data by timestamp or snapshot ID. Enables rollbacks.                         |
+| 🚀 **Hidden Partitioning**           | Avoids user errors by automatically managing partition logic; no need to include partition columns in queries. |
+| 🔍 **Efficient Reads with Metadata** | Maintains rich metadata (manifest files) to **prune files**, reducing scan costs significantly.                |
+| 📈 **Incremental Reads**             | Supports **incremental queries** (what changed since X). Great for downstream pipelines or CDC.                |
+| 🧱 **Multi-engine Support**          | Native support in **Apache Spark, Flink, Trino, Presto, Dremio, Hive** etc.                                    |
+| 🔐 **Cloud & Object Store Friendly** | Optimized for S3, GCS, Azure Blob, MinIO — avoids file listing issues like Hive.                               |
+| 📚 **Write Isolation**               | Writers do not interfere with each other. Iceberg uses snapshot isolation and atomic metadata commit.          |
+| ⚙️ **Compaction & Optimization**     | Supports background jobs for **compaction, rewrite, sort, and clustering**.                                    |
+
+**Alternatives**: Delta Lake, Apache Hudi
+
+### Data Ingestion
+#### Types of Data Sources
+| **Source Type**   | **Examples**                                                       |
+|-------------------|--------------------------------------------------------------------|
+| **Files**         | CSV, JSON, Parquet, Avro, ORC from local disk, S3, GCS, HDFS, etc. |
+| **RDBMS**         | PostgreSQL, MySQL, SQL Server, Oracle                              |
+| **NoSQL**         | MongoDB, Cassandra, DynamoDB                                       |
+| **Kafka/Streams** | Apache Kafka, AWS Kinesis, Azure Event Hub                         |
+| **IoT & Sensors** | MQTT, CoAP, Edge Gateways (via Kafka, MQTT brokers, HTTP APIs)     |
+| **APIs**          | REST, SOAP, GraphQL                                                |
+
+#### Tools & Technologies by Source Type
+1. **Files**
+   * Apache NiFi: Drag-drop flow-based batch/stream ingestion
+   * Apache Airflow: Orchestrate periodic file ingestion (S3, GCS, FTP)
+   * Kafka streams / Spark Structured Streaming for real-time
+2. **Databases**
+   * Batch Mode
+     *  Apache Sqoop (deprecated but useful): Parallel ingestion from RDBMS
+     *  Apache Airflow + JDBC + Spark: Scheduled jobs using JDBC reader
+   * Real-time (CDC)
+     *  Debezium + Kafka Connect: Capture DB change logs
+     *  Kafka topics → Stream ingestion
+     *  Apache Flink/Spark Structured Streaming
+4. **Kafka/Event Streams**
+   * Kafka Connect → HDFS/S3 Sink Connectors
+   * Spark Structured Streaming
+   * Flink (if using event time, windowed aggregations)
+5. **IoT and Sensor Data**: IoT → MQTT broker → Kafka or HTTP POST
+   * Apache NiFi: MQTT processors
+   * Kafka or Apache Pulsar for streaming
+   * Edge → Cloud ingestion via protocol converters
+6. **API Sources**
+   * Apache NiFi: InvokeHTTP processor for polling APIs
+   * Airflow DAGs: Scheduled API extraction
+   * Custom ingestion microservices: Push to Kafka or Bronze
 
 ### Compute Engine
-* **Apache Spark**: For batch processing and stream processing pipelines implementation.
-* **Apache NiFi**: For batch and real-time data ingestion. Minor transformations can also be performed.
-* **Apache Airflow**: For batch data processing pipelines orchestration and scheduling.
+The Compute Layer powers processing, querying, experimentation, analytics, and ML workloads.
+
+| **Tool**          | **Purpose**                        | **Features**                                                                                                                                   |
+|-------------------|------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------|
+| Apache Spark      | Distributed data processing        | Batch & stream processing                                                                                                                      |
+| Apache Airflow    | Workflow orchestration             | DAG scheduling, Spark job orchestration, Rich plugin/operator ecosystem                                                                        |
+| Trino             | Federated SQL query engine         | ANSI SQL on Iceberg, Hive, RDBMS, Kafka. Supports BI tools. Jupyter integration via SQL magic Fast ad-hoc analytics.                           |
+| Jupyter Notebooks | Data exploration & experimentation | Interactive Spark & Trino queries, Feature engineering, Visualization, ML experimentation & debugging                                          |
+| MLflow            | ML lifecycle management            | Tracks parameters, metrics, artifacts. Model registry & versioning. Reproducible experiments. REST model serving                               |
+| Feast             | Feature store                      | Centralized feature definitions.Offline store: Iceberg, Online store: Cassandra, Redis. Batch & streaming ingestion, Real-time feature serving |
+
 
 ### Data Governance
-**OpenMetadata**: Supports Metadata Management, Cataloging, Business Glossary, Classifications, Tagging, Lineage, Security, Data Quality and Data Discovery.
+**OpenMetadata**: OpenMetadata offers a comprehensive, extensible, and modern open-source solution for unified data governance, blending automation, collaboration, and observability.  
+
+| **Feature**                    | **Capabilities**                                                                                                                                                              |
+|--------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Metadata Management**        | Centralized repository for technical, operational, and business metadata. Supports tables, topics, dashboards, pipelines, ML models                                           |
+| **Cataloging**                 | Auto-discovery and registration of metadata from vast variety of connectors. Version-controlled metadata with changelogs                                                      |
+| **Business Glossary**          | Define business terms, descriptions, owners. Link glossary terms to datasets, columns, and metrics. Support for hierarchical glossaries                                       |
+| **Classifications**            | Define classification policies e.g. PII, sensitive data. Apply to columns and datasets for compliance tracking.                                                               |
+| **Tagging**                    | Add tags manually or through automated classification. Organize and search data assets more effectively                                                                       |
+| **Lineage**                    | Automatic lineage capture across ingestion pipelines. End-to-end lineage visualization at table-level, column-level, process-level. Supports Spark, Airflow, dbt, Kafka, etc. |
+| **Data Discovery**             | Faceted search across all metadata. Semantic search with glossary and tags. Context-rich asset pages with lineage, ownership, and usage                                       |
+
 Alternatives: Apache Atlas, Marquez
 
-### Data Quality Assurance
-Recommended: OpenMetadata
-Alternatives: Great Expectations, Deequ, Soda
+### Data Security and Access Control
+**OpenMetadata**: provides a robust, enterprise-ready security model that balances data democratization with controlled access and compliance.
 
-6. Feature Store (Real-Time Serving)
+| **Feature**                          | **Capabilities**                                                                                                                                  |
+|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Role-Based Access Control (RBAC)** | Assign roles like Admin, Data Steward, Data Consumer, etc. Built-in and custom role definitions. Control over CRUD operations on metadata objects |
+| **Fine-Grained Policies**            | Define access at entity, field, or action level e.g. view-only access to sensitive tables. Policies scoped by teams, roles, or users              |
+| **Teams and Ownership**              | Logical grouping of users into teams. Assign ownership of assets (tables, dashboards, pipelines, etc.) to users or teams                          |
+| **Authentication Integrations**      | Supports Single Sign-On (SSO) via OAuth2 / OIDC (e.g., Okta, Auth0), LDAP, Google, Azure AD, SAML (in roadmap or via plugins)                     |
+| **Audit Logging**                    | Tracks user actions on metadata assets. Logs view, edit, test runs, classification changes for compliance audit                                   |
+| **Sensitive Data Classification**    | Use policies and tags (e.g., PII, Confidential) to restrict access. Combined with lineage and tagging for data protection flows                   |
+| **API Token Management**             | Generate access tokens with scoped permissions for automated systems or CLI tools                                                                 |
+| **Metadata Encryption**              | Secures metadata and secrets with encryption at rest and in transit (TLS/HTTPS)                                                                   |
+| **Schema Change Alerts**             | Notify stakeholders on schema or classification changes that may affect downstream use                                                            |
 
-Best Choice: Feast with Cassandra (online store)
-•	Alternatives: Hopsworks (managed/free tier), Tecton (paid)
+> [!IMPORTANT]
+> Need to look into data masking, how to implement it.
 
-Criteria	Feast/Cassandra	Hopsworks	Tecton
-Real-time Serving	Excellent	Good	Excellent
-Cost	Free	Free/Paid	Paid
-Complexity	Medium	Medium	Low
-Open Source	Yes	Partially	No
+### Data Quality
+**OpenMetadata**: OpenMetadata’s Data Quality module is ideal for continuous, observable, and governance-aligned validation of data pipelines.
 
-7. Data Ingestion
+| Feature                                 | Description                                                                |
+|-----------------------------------------|----------------------------------------------------------------------------|
+| **Test Suite Management**               | Define and manage data quality test suites linked to tables or columns     |
+| **Inbuilt Test Types**                  | Supports out-of-the-box tests: null checks, uniqueness, value ranges, etc. |
+| **Custom Tests (SQL/Python)**           | Define custom quality checks using SQL or Python                           |
+| **Integration with Great Expectations** | Leverage GE tests natively inside OpenMetadata                             |
+| **Test Scheduling**                     | Automate test execution via ingestion workflows                            |
+| **Test Result Tracking**                | Track historical test runs and surface failures                            |
+| **Column-level Expectations**           | Apply data quality rules at granular schema levels                         |
+| **Alerting & Notification**             | Trigger alerts via Slack, email, or webhook on test failures               |
+| **Visual Dashboard**                    | Monitor test coverage and status with visual widgets                       |
+| **Lineage-Aware Quality Context**       | Connect test failures to upstream/downstream data via lineage graphs       |
+| **Integration with Airflow**            | Use Airflow to schedule and run tests as part of ETL/ELT pipelines         |
 
-Best Choice: Apache NiFi (Real-Time) / Airflow (Batch)
-•	Alternatives: Kafka Connect, AWS Glue
+### Observability
+**OpenMetadata**:  Following features make OpenMetadata not just a governance layer but a living control plane for data reliability and operational awareness.
 
-Criteria	NiFi	Airflow	Kafka Connect
-Real-time Support	Excellent	Moderate	Excellent
-Batch Jobs	Good	Excellent	Moderate
-Ease of Use	Good	Excellent	Moderate
-Integration	Extensive	Extensive	Moderate
-
-Implementation Best Practices
-•	Separate storage from compute to optimize costs.
-•	Automate metadata capture for better lineage and governance.
-•	Ensure security compliance via role-based access control (RBAC).
-•	Regularly audit data quality and perform automated checks.
-•	Maintain clear and structured documentation.
-
+| **Feature**                     | **Capabilities**                                                                                                                                                                    |
+|---------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Usage Tracking**              | • Tracks query counts, frequent access patterns, user activity on tables, dashboards, etc.<br>• Supports integrations with usage logs from tools like Snowflake, BigQuery, Redshift |
+| **Data Profile Statistics**     | • Automatically captures min/max, null count, distinct count, mean, median, etc.<br>• Helps understand distribution and anomalies in data                                           |
+| **Data Quality Monitoring**     | • Test execution status over time<br>• Visual dashboards for pass/fail trends, test coverage                                                                                        |
+| **Data Lineage Insights**       | • Identify stale/unused data via lineage traversal<br>• Trace impact of upstream changes                                                                                            |
+| **Ingestion Health Monitoring** | • Status of metadata/data ingestion workflows<br>• Retry and error logging for failed sources                                                                                       |
+| **Change Events & Versioning**  | • Tracks schema changes, test result variations, ownership changes<br>• Supports diff views across metadata versions                                                                |
+| **Alerts & Notifications**      | • Alert on test failures, schema changes, access events via Slack, email, or webhooks                                                                                               |
+| **Dashboards & Visuals**        | • UI widgets for top datasets by access, asset health, and test results<br>• Provides asset-level quality and usage scorecards                                                      |
 
 ## References
-- [Spring boot starter for Spark](https://github.com/officiallysingh/spring-boot-starter-spark).
-- [Apache Hadoop and Hive installation guide](https://medium.com/@officiallysingh/install-apache-hadoop-and-hive-on-mac-m3-7933e509da90) for details on how to install Hadoop and Hive.
-- To know about Spark Refer to [**Spark Documentation**](https://spark.apache.org/docs/latest/).
-- Find all Spark Configurations details at [**Spark Configuration Documentation**](https://spark.apache.org/docs/latest/configuration.html)
+- [Open Metadata](https://open-metadata.org/)
+- [Access Control for Open Metadata](https://blog.open-metadata.org/building-access-control-for-openmetadata-5b842a2abd90)
+- [Apache Nifi](https://nifi.apache.org/)
+- [Apache Airflow](https://airflow.apache.org/)
+- [Apache Flink](https://flink.apache.org/)
+- [Apache Atlas](https://atlas.apache.org/)
+- [Apache Ranger](https://ranger.apache.org/)
+- [Kafka](https://kafka.apache.org/)
+- [Kafka Connect](https://docs.confluent.io/platform/current/connect/index.html)
+- [Kafka Streams](https://kafka.apache.org/documentation/streams/)
+- [Debezium](https://debezium.io/)
+- [MinIO](https://min.io/)
 - [Apache Iceberg](https://iceberg.apache.org/docs/nightly/)
 - [Apache Iceberg Spark Quickstart](https://iceberg.apache.org/docs/1.9.0/java-api-quickstart/)
 - [Apache Hadoop](https://hadoop.apache.org/)
 - [Apache Hive](https://hive.apache.org/)
-- [Nessie](https://projectnessie.org/iceberg/iceberg/)
+- [Spark Documentation](https://spark.apache.org/docs/latest/).
+- [Spark Configuration Documentation](https://spark.apache.org/docs/latest/configuration.html)
+- [Spring boot starter for Spark](https://github.com/officiallysingh/spring-boot-starter-spark).
+- [Apache Hadoop and Hive installation guide](https://medium.com/@officiallysingh/install-apache-hadoop-and-hive-on-mac-m3-7933e509da90) for details on how to install Hadoop and Hive.
