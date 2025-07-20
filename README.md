@@ -97,7 +97,6 @@ It complements and leverages key Lakehouse features as follows.
 * Scalability and elasticity
 * Modular Architecture
 * Batch and real-time data ingestion, processing and serving  
-![Design Principles](img/design_principles.png)
 
 ## Architecture
 **Bird's Eye View**  
@@ -214,7 +213,62 @@ Alternatives: Apache Atlas, Marquez
 | **Schema Change Alerts**             | Notify stakeholders on schema or classification changes that may affect downstream use                                                            |
 
 > [!IMPORTANT]
-> Need to look into data masking, how to implement it.
+> Each role should be defined in a centralized IAM system (e.g., Keycloak), and mapped to policies in Apache Ranger or the equivalent data access layer.
+
+**Following are the roles as per convention**
+1. Data Security Officer (DSO)
+   * Owns the data security policy across the organization.
+   * Ensures compliance with external regulations (e.g., GDPR, HIPAA).
+   * Defines RBAC models and reviews access logs and audit trails.
+
+**Privileges**: Policy admin, audit logs, compliance dashboard access
+
+2. Data Steward
+   * Manages data classification, sensitivity levels, tagging (e.g., PII, confidential).
+   * Works with DSO to ensure data is categorized correctly.
+   * Ensures metadata is accurate and secure.
+
+**Privileges**: Metadata editing, lineage access, catalog tagging
+
+3. Data Owner (Business/Domain Owner)
+   * Accountable for the security, access, and usage of specific data domains (e.g., finance, HR).
+   * Approves data access requests.
+   * Works with stewards to tag sensitive data and set access policies.
+
+**Privileges**: Approver in access request workflows, policy contributor
+
+4. Data Engineer
+   * Implements ingestion, transformation, and processing pipelines.
+   * Ensures sensitive data is masked, encrypted, or filtered before downstream use.
+   * Implements row/column-level security where applicable.
+
+**Privileges**: Read/write to Bronze/Silver layers, limited access to Gold
+
+5. Data Analyst / Scientist
+   * Consumes curated data (Silver/Gold) for analytics and ML.
+   * Should not have access to raw data (Bronze) or PII without approval.
+
+**Privileges**: Read-only access to Gold/Silver, request-based access to sensitive datasets
+
+6. ML Engineer / ML Ops
+   * Consumes features from Feast, trains/serves models.
+   * Requires access to offline (Iceberg) and online (Cassandra) feature stores.
+   * Must ensure models do not leak sensitive attributes (e.g., inferential re-ID).
+
+**Privileges**: Read/write access to feature stores, metadata access, monitoring logs
+
+7. Platform Administrator / DevOps
+   * Manages infrastructure, including Spark on Kubernetes, MinIO, Trino.
+   * Sets up authentication (Keycloak) and integrates with Apache Ranger.
+   * Ensures encryption in transit and at rest.
+
+**Privileges**: Cluster admin, but no direct data access by default
+
+8. Auditor / Compliance Officer
+   * Periodically reviews access logs, lineage, and policy violations.
+   * Ensures adherence to audit and retention policies.
+
+**Privileges**: Read-only access to audit logs and policy definitions
 
 ### Data Quality
 **OpenMetadata**: OpenMetadata’s Data Quality module is ideal for continuous, observable, and governance-aligned validation of data pipelines.
