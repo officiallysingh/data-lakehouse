@@ -217,41 +217,41 @@ Alternatives: Apache Atlas, Marquez
 > Each role should be defined in a centralized IAM system (e.g., Keycloak), and mapped to policies in Apache Ranger or the equivalent data access layer.
 
 #### Following are the roles as per convention
-1. **Data Security Officer (DSO)**: Policy admin, audit logs, compliance dashboard access
+1. **Data Security Officer (DSO)**: Policy admin, audit logs, compliance dashboard access.
    * Owns the data security policy across the organization.
    * Ensures compliance with external regulations (e.g., GDPR, HIPAA).
    * Defines RBAC models and reviews access logs and audit trails.
 
-2. **Data Steward**: Metadata editing, lineage access, catalog tagging
+2. **Data Steward**: Metadata editing, lineage access, catalog tagging.
    * Manages data classification, sensitivity levels, tagging (e.g., PII, confidential).
    * Works with DSO to ensure data is categorized correctly.
    * Ensures metadata is accurate and secure.
 
-3. **Data Owner (Business/Domain Owner)**: Approver in access request workflows, policy contributor
+3. **Data Owner (Business/Domain Owner)**: Approver in access request workflows, policy contributor.
    * Accountable for the security, access, and usage of specific data domains (e.g., finance, HR).
    * Approves data access requests.
    * Works with stewards to tag sensitive data and set access policies.
 
-4. **Data Engineer**: Read/write to Bronze/Silver layers, limited access to Gold
+4. **Data Engineer**: Read/write to Bronze/Silver layers, limited access to Gold.
    * Implements ingestion, transformation, and processing pipelines.
    * Ensures sensitive data is masked, encrypted, or filtered before downstream use.
    * Implements row/column-level security where applicable.
 
-5. **Data Analyst/Scientist**: Read-only access to Gold/Silver, request-based access to sensitive datasets
+5. **Data Analyst/Scientist**: Read-only access to Gold/Silver, request-based access to sensitive datasets.
    * Consumes curated data (Silver/Gold) for analytics and ML.
    * Should not have access to raw data (Bronze) or PII without approval.
 
-6. **ML Engineer/ML Ops**: Read/write access to feature stores, metadata access, monitoring logs
+6. **ML Engineer/ML Ops**: Read/write access to feature stores, metadata access, monitoring logs.
    * Consumes features from Feast, trains/serves models.
    * Requires access to offline (Iceberg) and online (Cassandra) feature stores.
    * Must ensure models do not leak sensitive attributes (e.g., inferential re-ID).
 
-7. **Platform Administrator/DevOps**: Cluster admin, but no direct data access by default
+7. **Platform Administrator/DevOps**: Cluster admin, but no direct data access by default.
    * Manages infrastructure, including Spark on Kubernetes, MinIO, Trino.
    * Sets up authentication (Keycloak) and integrates with Apache Ranger.
    * Ensures encryption in transit and at rest.
 
-8. **Auditor/Compliance Officer**: Read-only access to audit logs and policy definitions
+8. **Auditor/Compliance Officer**: Read-only access to audit logs and policy definitions.
    * Periodically reviews access logs, lineage, and policy violations.
    * Ensures adherence to audit and retention policies.
 
