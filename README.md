@@ -100,9 +100,11 @@ It complements and leverages key Lakehouse features as follows.
 
 ## Architecture
 <div align="center"><b>Bird's Eye View</b></div>  
+
 ![Birds eye View](img/birds_eye_view.png)  
 
 <div align="center"><b>Components View</b></div>  
+
 ![components](img/components.png)  
 
 ### Storage
