@@ -214,13 +214,13 @@ Alternatives: Apache Atlas, Marquez
 | **Schema Change Alerts**             | Notify stakeholders on schema or classification changes that may affect downstream use                                                            |
 
 > [!IMPORTANT]
-> Each role should be defined in a centralized IAM system (e.g., Keycloak), and mapped to policies in Apache Ranger or the equivalent data access layer.
+> Each role should be defined in a centralized IAM system (e.g., Keycloak, Active Directory etc.), and mapped to policies in Authentication provider or the equivalent data access layer.
 
 #### Following are the roles as per convention
 1. **Data Security Officer (DSO)**: Policy admin, audit logs, compliance dashboard access.
    * Owns the data security policy across the organization.
    * Ensures compliance with external regulations (e.g., GDPR, HIPAA).
-   * Defines RBAC models and reviews access logs and audit trails.
+   * Defines RBAC policies and reviews access logs and audit trails.
 
 2. **Data Steward**: Metadata editing, lineage access, catalog tagging.
    * Manages data classification, sensitivity levels, tagging (e.g., PII, confidential).
@@ -243,12 +243,12 @@ Alternatives: Apache Atlas, Marquez
 
 6. **ML Engineer/ML Ops**: Read/write access to feature stores, metadata access, monitoring logs.
    * Consumes features from Feast, trains/serves models.
-   * Requires access to offline (Iceberg) and online (Cassandra) feature stores.
+   * Requires access to offline (Iceberg) and online (Redis, Cassandra) feature stores.
    * Must ensure models do not leak sensitive attributes (e.g., inferential re-ID).
 
 7. **Platform Administrator/DevOps**: Cluster admin, but no direct data access by default.
    * Manages infrastructure, including Spark on Kubernetes, MinIO, Trino.
-   * Sets up authentication (Keycloak) and integrates with Apache Ranger.
+   * Sets up authentication and integrates with Authentication Provider.
    * Ensures encryption in transit and at rest.
 
 8. **Auditor/Compliance Officer**: Read-only access to audit logs and policy definitions.
@@ -289,7 +289,7 @@ Alternatives: Apache Atlas, Marquez
 ## References
 - [Open Metadata](https://open-metadata.org/)
 - [Access Control for Open Metadata](https://blog.open-metadata.org/building-access-control-for-openmetadata-5b842a2abd90)
-- [Apache Nifi](https://nifi.apache.org/)
+- [Apache NiFi](https://nifi.apache.org/)
 - [Apache Airflow](https://airflow.apache.org/)
 - [Apache Flink](https://flink.apache.org/)
 - [Apache Atlas](https://atlas.apache.org/)
