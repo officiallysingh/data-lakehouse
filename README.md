@@ -99,10 +99,10 @@ It complements and leverages key Lakehouse features as follows.
 * Batch and real-time data ingestion, processing and serving  
 
 ## Architecture
-<div align="center"><b>Bird's Eye View</b></div>
+<div align="center"><b>Bird's Eye View</b></div>  
 ![Birds eye View](img/birds_eye_view.png)  
 
-<div align="center"><b>Components View</b></div>
+<div align="center"><b>Components View</b></div>  
 ![components](img/components.png)  
 
 ### Storage
@@ -150,7 +150,6 @@ It forms the foundation of the Lakehouse and is responsible for persisting all s
    * Kafka streams / Spark Structured Streaming for real-time
 2. **Databases**
    * Batch Mode
-     *  Apache Sqoop (deprecated but useful): Parallel ingestion from RDBMS
      *  Apache Airflow + JDBC + Spark: Scheduled jobs using JDBC reader
    * Real-time (CDC)
      *  Debezium + Kafka Connect: Capture DB change logs
