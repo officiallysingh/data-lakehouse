@@ -99,10 +99,10 @@ It complements and leverages key Lakehouse features as follows.
 * Batch and real-time data ingestion, processing and serving  
 
 ## Architecture
-**Bird's Eye View**  
+<div align="center"><b>Bird's Eye View</b></div>
 ![Birds eye View](img/birds_eye_view.png)  
 
-**Components View**
+<div align="center"><b>Components View</b></div>
 ![components](img/components.png)  
 
 ### Storage
